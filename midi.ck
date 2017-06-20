@@ -30,6 +30,7 @@ channels[Std.rand2(0,channels.cap()-1)] => channel;
 while (true) {
     Std.rand2(100,127) => int note;
     Std.rand2(12,100) => int velocity;
+    <<< note >>>; 
     playNote(channel,note,velocity, Std.rand2f(0.1,0.3)::second);
     Std.rand2f(0.1,0.3)::second => now;
 }
