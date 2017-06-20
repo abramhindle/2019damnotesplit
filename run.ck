@@ -47,6 +47,8 @@ function void playBufPrefix(SndBuf chirpy, SndBuf sndBuf) {
 
 // adc
 SndBuf fake => LiSa loop => HPF hp => Gain g => dac;
+fake => LiSa chorusLoop => hp;
+fake => LiSa granularLoop => hp;
 20.0 => hp.freq;
 1.0 => hp.Q;
 fake => Gain g2 => dac;
@@ -55,18 +57,26 @@ fake => Gain g2 => dac;
 1.0 => g.gain;
 0.0 => g2.gain;
 mydur => loop.duration;
+mydur => chorusLoop.duration;
+mydur => granularLoop.duration;
+
 "Sample_1.wav" => fake.read;
 fake.play(1);
+200 => loop.maxVoices;
+200 => chorusLoop.maxVoices;
+200 => granularLoop.maxVoices;
 
-function void recording(dur mydur) {
+function void recording(LiSa loop, dur mydur) {
   <<< "listening" >>>;
   playBuf(chirpy);
   playBufPrefix(chirpy,listening);
   recordingVolume => g2.gain;
   100::ms => now;
+  loop.recPos(0::ms);
   loop.record(1);
   mydur => now;
   loop.record(0);
+  loop.playPos(0::ms);
   0.0 => g2.gain;
 }
 
@@ -84,52 +94,56 @@ function void counter() {
   playBufPrefix(chirpy,countering);
 }
 
-// playBuf(chirpy);
-// playBuf(chirpy);
-// playBuf(chirpy);
-// 
-// recording(mydur);
-// counter();
-// chorus(loop,mydur);
-// 
-// recording(mydur);
-// counter();
-// granular(loop,mydur);
-// 
-// recording(mydur);
-// counter();
-// sineVocoder(loop,mydur);
-// 
-// recording(mydur);
-// counter();
-// adsrSqrVocoder(loop,mydur);
-// 
-// recording(mydur);
-// counter();
-// midiVocoder(loop,mydur,0);
-// 
-// recording(mydur);
-// counter();
-// midiVocoder(loop,mydur,1);
-// 
-// playBuf(chirpy);
-// playBuf(chirpy);
-// playBufPrefix(chirpy,completed);
+playBuf(chirpy);
+playBuf(chirpy);
+playBuf(chirpy);
 
+recording(chorusLoop,mydur);
+counter();
+chorus(chorusLoop,mydur);
 
-recording(mydur);
-chorus(loop,mydur);
-granular(loop,mydur);
+recording(granularLoop,mydur);
+counter();
+granular(granularLoop,mydur);
+
+recording(loop,mydur);
+counter();
 sineVocoder(loop,mydur);
+
+recording(loop,mydur);
+counter();
 adsrSqrVocoder(loop,mydur);
+
+recording(loop,mydur);
+counter();
 midiVocoder(loop,mydur,0);
+
+recording(loop,mydur);
+counter();
 midiVocoder(loop,mydur,1);
+
+playBufPrefix(chirpy,completed);
+
+
+function void playItAllSimple() {
+// Good for debugging
+  recording(chorusLoop,mydur);
+  chorus(chorusLoop,mydur);
+  recording(granularLoop,mydur);
+  granular(granularLoop,mydur);
+  recording(loop,mydur);
+  sineVocoder(loop,mydur);
+  adsrSqrVocoder(loop,mydur);
+  midiVocoder(loop,mydur,0);
+  midiVocoder(loop,mydur,1);
+}
 
 
 
 fun void adsrSqrVocoder(LiSa loop, dur duration) {
   <<< "ADSR Square Vocoder" >>>;
   loop.getVoice() => int newvoice;
+  loop.playPos(newvoice, 0::ms);
   loop.rate(newvoice, 1);
   loop.play(newvoice, 1);
   0.0 => g.gain;
@@ -188,7 +202,7 @@ fun void adsrSqrVocoder(LiSa loop, dur duration) {
     window_size::samp => now;
   }
   <<< "release" >>>;
-  loop.play(newvoice,0);
+  loop.rampDown(newvoice,200::ms);
   for( 1 => int i; i < 100 ; i++ ) {
     for( 0 => int j; j < n ; j++ ) {
       gains[j] / (i*i) => sines[j].gain;
@@ -198,6 +212,7 @@ fun void adsrSqrVocoder(LiSa loop, dur duration) {
   for( 0 => int j; j < n ; j++ ) {
     0.0 => sines[j].gain;
   }
+  1.0 => g.gain;
 }   
 
 fun void chorus(LiSa loop, dur duration) {
@@ -208,6 +223,7 @@ fun void chorus(LiSa loop, dur duration) {
   for( 0 => int i; i < n ; i++ ) {
     loop.getVoice() => int newvoice;
     newvoice => voices[i];
+    loop.playPos(newvoice, 0::ms);
     loop.play(newvoice,1);
     loop.loop(newvoice,1);
     if (i % 2 == 1) {
@@ -231,7 +247,7 @@ fun void getgrain(LiSa loop, dur grainlen, dur rampup, dur rampdown, float rate)
 {
   loop.getVoice() => int newvoice;
   //<<<newvoice>>>;
-  
+
   if(newvoice > -1) {
     loop.loop(newvoice, 1);
     loop.rate(newvoice, rate);
@@ -270,6 +286,8 @@ fun void sineVocoder(LiSa loop, dur duration) {
   loop.getVoice() => int newvoice;
   loop.rate(newvoice, 1);
   loop.play(newvoice, 1);
+  loop.playPos(newvoice, 0::ms);
+
   256 => int window_size;
   8 => int n;
   0.0 => g.gain;
@@ -332,6 +350,7 @@ fun void sineVocoder(LiSa loop, dur duration) {
   for( 0 => int j; j < n ; j++ ) {
     0 => sines[j].gain;
   }
+  1.0 => g.gain;
 }   
 
 fun void midiVocoder(LiSa loop, dur duration, int channel) {
@@ -339,6 +358,8 @@ fun void midiVocoder(LiSa loop, dur duration, int channel) {
   loop.getVoice() => int newvoice;
   loop.rate(newvoice, 1);
   loop.play(newvoice, 1);
+  loop.playPos(newvoice, 0::ms);
+
   0.0 => g.gain;
   256 => int window_size;
   8 => int n;
