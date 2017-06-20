@@ -46,9 +46,16 @@ function void playBufPrefix(SndBuf chirpy, SndBuf sndBuf) {
 }
 
 // adc
-SndBuf fake => LiSa loop => HPF hp => Gain g => dac;
+SndBuf fake => LiSa loop1 => HPF hp => Gain g => dac;
 fake => LiSa chorusLoop => hp;
 fake => LiSa granularLoop => hp;
+fake => LiSa loop2 => hp;
+fake => LiSa loop3 => hp;
+fake => LiSa loop4 => hp;
+fake => LiSa loop5 => hp;
+fake => LiSa loop6 => hp;
+
+
 20.0 => hp.freq;
 1.0 => hp.Q;
 fake => Gain g2 => dac;
@@ -61,6 +68,11 @@ mydur => chorusLoop.duration;
 mydur => granularLoop.duration;
 
 "Sample_1.wav" => fake.read;
+// "Sample_2.wav" => fake.read;
+// "Sample_3.wav" => fake.read;
+// "Sample_4.wav" => fake.read;
+// "Sample_5.wav" => fake.read;
+// "aria_da_capo.wav" => fake.read; // good example of not handling low volume
 fake.play(1);
 200 => loop.maxVoices;
 200 => chorusLoop.maxVoices;
