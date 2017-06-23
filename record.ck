@@ -82,7 +82,7 @@ fun void vocoder(LiSa loop, dur duration) {
          loop.rate(newvoice, 1);
          loop.play(newvoice, 1);
          8 => n;
-         BPF bpfs[n]'
+         BPF bpfs[n];
          FFT ffts[n];
          RMS rmss[n];
          SinOsc sines[n];
