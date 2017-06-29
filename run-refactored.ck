@@ -126,80 +126,6 @@ function void playItAllSimple() {
 
 
 
-fun void adsrSqrVocoder(LiSa loop, dur duration) {
-  <<< "ADSR Square Vocoder" >>>;
-  loop.getVoice() => int newvoice;
-  loop.playPos(newvoice, 0::ms);
-  loop.rate(newvoice, 1);
-  loop.play(newvoice, 1);
-  0.0 => g.gain;
-  256 => int window_size;
-  8 => int n;
-  float gains[n];
-  BPF bpfs[n];
-  BPF bpfs2[n];
-  FFT ffts[n];
-  ADSR envs[n];
-  RMS rmss[n];
-  SqrOsc sines[n];
-  0.8 => float mix;
-  0.01 => float threshold;
-  duration + now => time end;
-  //  G, A, B♭, C, D, E♭, and F. and G
-  [5, 19, 33, 46, 60, 74, 87, 101, 115] @=> int midis[];
-  // [12, 24, 36, 48, 60, 72, 84, 96  ] @=> int midis[];
-  for( 0 => int i; i < n ; i++ ) {
-    loop => bpfs[i];
-    bpfs[i] => ffts[i];
-    // bpfs[i] => dac;
-    ffts[i] =^ rmss[i];
-    rmss[i] => blackhole;
-    float gains[i];
-    // bpf
-    1.0 => bpfs[i].Q;
-    Std.mtof(midis[i]) => bpfs[i].freq;        
-    0.6 => bpfs2[i].Q;
-    Std.mtof(midis[i]) => bpfs2[i].freq;        
-    window_size => ffts[i].size;
-    Windowing.hann( window_size ) => ffts[i].window;
-    0.01 => sines[i].gain;
-    Std.mtof(midis[i]) => sines[i].freq;
-    sines[i] => bpfs2[i] => envs[i] => dac;
-    window_size::samp =>  envs[i].attackTime;
-    window_size::samp =>  envs[i].decayTime;
-    0.5 => envs[i].sustainLevel;
-    0.5::second =>  envs[i].releaseTime;
-  }
-  while (now < end) {
-    for( 0 => int i; i < n ; i++ ) {
-      rmss[i].upchuck();
-      rmss[i].fval(0) => float v;
-      //<<< v >>>;
-      if (v > threshold) {
-        (1.0-mix)*(16.0/i)*10*v + mix*gains[i] => gains[i];
-        envs[i].keyOn();
-      } else {                
-        mix*gains[i] => gains[i];
-        envs[i].keyOff();
-      }
-      gains[i] => sines[i].gain;
-    }
-    // set window (optional here)
-    window_size::samp => now;
-  }
-  <<< "release" >>>;
-  loop.rampDown(newvoice,200::ms);
-  for( 1 => int i; i < 100 ; i++ ) {
-    for( 0 => int j; j < n ; j++ ) {
-      gains[j] / (i*i) => sines[j].gain;
-    }
-    10::ms => now;
-  }
-  for( 0 => int j; j < n ; j++ ) {
-    0.0 => sines[j].gain;
-  }
-  1.0 => g.gain;
-}   
 
 fun void chorus(LiSa loop, dur duration) {
   <<< "chorus" >>>;
@@ -353,8 +279,9 @@ class AbsVocoder {
     fun float mix() {
         return 0.99;
     }
+    1.1 => float _threshold;
     fun float threshold() {
-        return 1.1;
+        return _threshold;
     }
     fun int midi(int i) {
         return 0;
@@ -417,59 +344,87 @@ class SineVocoder extends AbsVocoder {
     }
 }
 
-fun void midiVocoder(LiSa loop, dur duration, int channel) {
-  <<< "Midi Square Vocoder" >>>;
-  loop.getVoice() => int newvoice;
-  loop.rate(newvoice, 1);
-  loop.play(newvoice, 1);
-  loop.playPos(newvoice, 0::ms);
 
-  0.0 => g.gain;
-  256 => int window_size;
-  8 => int n;
-  float gains[n];
-  BPF bpfs[n];
-  FFT ffts[n];
-  RMS rmss[n];
-  0.8 => float mix;
-  0.01 => float threshold;
-  duration + now => time end;
-  //  G, A, B♭, C, D, E♭, and F. and G
-  [5, 19, 33, 46, 60, 74, 87, 101, 115] @=> int midis[];
-  for( 0 => int i; i < n ; i++ ) {
-    loop => bpfs[i];
-    bpfs[i] => ffts[i];
-    ffts[i] =^ rmss[i];
-    rmss[i] => blackhole;
-    float gains[i];
-    1.0 => bpfs[i].Q;
-    Std.mtof(midis[i]) => bpfs[i].freq;        
-    window_size => ffts[i].size;
-    Windowing.hann( window_size ) => ffts[i].window;
-  }
-  while (now < end) {
-    for( 0 => int i; i < n ; i++ ) {
-      rmss[i].upchuck();
-      rmss[i].fval(0) => float v;
-      if (v > threshold) {
-        spork ~ playNote(channel, midis[i], 64, 200::ms);
-      } else {
-        spork ~ noteOff(channel, midis[i], 64);
-      }
+class AdsrSqrVocoder extends SineVocoder {
+    ADSR envs[];
+    fun string name() { return "ADSR Sine Vocoder"; }
+    fun void setupVocoder() {
+        getN() => int n;
+        float _gains[n];
+        SinOsc _sines[n];
+        ADSR _envs[n];
+        _sines @=> sines;
+        _gains @=> sgains;
+        _envs  @=> envs;
+        BPF bpfs2[n];
+        for( 0 => int i; i < n ; i++ ) {
+            0.6 => bpfs2[i].Q;
+            freq(i) => bpfs2[i].freq;        
+            0.01 => sines[i].gain;
+            freq(i) => sines[i].freq;
+            sines[i] => bpfs2[i] => envs[i] => dac;
+            windowSize()::samp =>  envs[i].attackTime;
+            windowSize()::samp =>  envs[i].decayTime;
+            0.5 => envs[i].sustainLevel;
+            0.5::second =>  envs[i].releaseTime;
+        }
     }
-    window_size::samp => now;
-  }
-  <<< "release" >>>;
-  loop.play(newvoice,0);
+
+    fun void playANote(int i, float rms, float gain) {
+        // play a note
+        mix() => float mix;
+        (1.0-mix)*(16.0/i)*10*rms + mix*sgains[i] => sgains[i];
+        sgains[i] => sines[i].gain;
+        envs[i].keyOn();
+    }
+    fun void stopANote(int i, float rms, float gain) {
+        mix()*sgains[i] => sgains[i];
+        sgains[i] => sines[i].gain;
+        envs[i].keyOff();
+    }
 }   
 
 
+class MidiVocoder extends AbsVocoder {
+    fun string name() {
+        return "Midi Vocoder";
+    }
+    fun int midi(int i) {
+        return favMidis[i];
+    }
+    // set these your selves?
+    [5, 19, 33, 46, 60, 74, 87, 101, 115] @=> int midis[];
+    [0,1,2,3,4,5,6,7,8,9] @=> int channels[];
+    //[0,0,8,8,8,5,6,7,9,9] @=> int channels[];
+    //[0,15,0,15,0,15,0,15,0] @=> int channels[];
+    [1::second,0.5::second,0.25::second,100::ms,100::ms,100::ms,50::ms,50::ms,50::ms,50::ms] @=> dur durs[];
+    [127,127,90,90,80,80,64,64,64,64,64,64] @=> int velocities[];   
+    fun void playANote(int i, float rms, float gain) {
+        // play a note
+        spork ~ playNote(channels[i], midis[i], velocities[i], durs[i]);
+    }
+    fun void stopANote(int i, float rms, float gain) {
+        "do nothing";
+    }
+    fun void turnOff() {
+        getN() => int n;
+        for( 0 => int i; i < n ; i++ ) {
+            for( 0 => int j; j < n ; j++ ) {
+                spork ~ noteOff(channels[i], midis[i], velocities[j]);
+            }
+        }
+    }
+}
 
-playBuf(chirpy);
-playBuf(chirpy);
-playBuf(chirpy);
+
 
 /*
+
+
+playBuf(chirpy);
+playBuf(chirpy);
+playBuf(chirpy);
+
 recording(chorusLoop,mydur);
 counter();
 chorus(chorusLoop,mydur);
@@ -477,27 +432,41 @@ chorus(chorusLoop,mydur);
 recording(granularLoop,mydur);
 counter();
 granular(granularLoop,mydur);
+
+//recording(loop,mydur);
+//counter();
+////sineVocoder(loop,mydur);
+//SineVocoder sineVocoder;
+//sineVocoder.vocoder(loop,mydur);
+//
+
+recording(loop,mydur);
+counter();
+AdsrSqrVocoder adsrSqrVocoder;
+adsrSqrVocoder.vocoder(loop,mydur);
+
+
+recording(loop,mydur);
+counter();
+MidiVocoder midiVocoder;
+[0,0,0,0,0,0,0,0,0] @=> midiVocoder.channels;
+midiVocoder.vocoder(loop,mydur);
+
 */
-recording(loop,mydur);
-counter();
-//sineVocoder(loop,mydur);
-SineVocoder sineVocoder;
-sineVocoder.vocoder(loop,mydur);
-
-/*
-recording(loop,mydur);
-counter();
-adsrSqrVocoder(loop,mydur);
 
 recording(loop,mydur);
 counter();
-midiVocoder(loop,mydur,0);
-
-
+MidiVocoder midiVocoder2;
+2.0 => midiVocoder2._threshold;
+[0,1,2,3,4,5,6,7,8,9] @=> midiVocoder2.channels;
+midiVocoder2.vocoder(loop,mydur);
 
 recording(loop,mydur);
 counter();
-midiVocoder(loop,mydur,1);
+MidiVocoder midiVocoder3;
+1.5 => midiVocoder2._threshold;
+[0,0,8,8,8,5,6,7,9,9] @=> midiVocoder3.channels;
+midiVocoder3.vocoder(loop,mydur);
 
 playBufPrefix(chirpy,completed);
-*/
+
