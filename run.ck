@@ -45,10 +45,16 @@ function void playBufPrefix(SndBuf chirpy, SndBuf sndBuf) {
   playBuf(sndBuf);
 }
 
+
 // adc
-SndBuf fake => LiSa loop => HPF hp => Gain g => dac;
-fake => LiSa chorusLoop => hp;
-fake => LiSa granularLoop => hp;
+adc => LiSa loop => HPF hp => Gain g => dac;
+adc => LiSa chorusLoop => hp;
+adc => LiSa granularLoop => hp;
+adc => Gain g2 => dac;
+// SndBuf fake => LiSa loop => HPF hp => Gain g => dac;
+// fake => LiSa chorusLoop => hp;
+// fake => LiSa granularLoop => hp;
+// fake => Gain g2 => dac;
 // fake => LiSa loop2 => hp;
 // fake => LiSa loop3 => hp;
 // fake => LiSa loop4 => hp;
@@ -58,7 +64,6 @@ fake => LiSa granularLoop => hp;
 
 20.0 => hp.freq;
 1.0 => hp.Q;
-fake => Gain g2 => dac;
 30::second => dur mydur;
 0.95 => float recordingVolume;
 1.0 => g.gain;
@@ -69,8 +74,9 @@ mydur => granularLoop.duration;
 
 // "Sample_1.wav" => fake.read;
 //"aria_da_capo.wav" => fake.read; // good example of not handling low volume
-"aria_da_capo_loud.wav" => fake.read;
-fake.play(1);
+
+// "aria_da_capo_loud.wav" => fake.read;
+// fake.play(1);
 200 => loop.maxVoices;
 200 => chorusLoop.maxVoices;
 200 => granularLoop.maxVoices;
@@ -107,6 +113,7 @@ playBuf(chirpy);
 playBuf(chirpy);
 playBuf(chirpy);
 
+/*
 recording(chorusLoop,mydur);
 counter();
 chorus(chorusLoop,mydur);
@@ -126,6 +133,8 @@ adsrSqrVocoder(loop,mydur);
 recording(loop,mydur);
 counter();
 midiVocoder(loop,mydur,0);
+
+*/
 
 recording(loop,mydur);
 counter();
