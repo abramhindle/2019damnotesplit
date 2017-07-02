@@ -418,8 +418,6 @@ class MidiVocoder extends AbsVocoder {
 
 
 
-/*
-
 
 playBuf(chirpy);
 playBuf(chirpy);
@@ -452,7 +450,6 @@ MidiVocoder midiVocoder;
 [0,0,0,0,0,0,0,0,0] @=> midiVocoder.channels;
 midiVocoder.vocoder(loop,mydur);
 
-*/
 
 recording(loop,mydur);
 counter();
@@ -461,11 +458,15 @@ MidiVocoder midiVocoder2;
 [0,1,2,3,4,5,6,7,8,9] @=> midiVocoder2.channels;
 midiVocoder2.vocoder(loop,mydur);
 
+
+
 recording(loop,mydur);
 counter();
 MidiVocoder midiVocoder3;
-1.5 => midiVocoder2._threshold;
-[0,0,8,8,8,5,6,7,9,9] @=> midiVocoder3.channels;
+2.0 => midiVocoder3._threshold;
+[15,15,8,8,8,5,6,7,9,9] @=> midiVocoder3.channels;
+[1::second,0.5::second,0.25::second,100::ms,100::ms,100::ms,50::ms,50::ms,50::ms,50::ms] @=> midiVocoder3.durs;
+[127,127,90,90,80,80,64,64,64,64,64,64] @=> midiVocoder3.velocities;
 midiVocoder3.vocoder(loop,mydur);
 
 playBufPrefix(chirpy,completed);
