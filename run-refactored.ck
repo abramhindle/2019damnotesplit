@@ -41,7 +41,7 @@ function void playBuf(SndBuf sndBuf) {
 }
 
 function void playBufPrefix(SndBuf chirpy, SndBuf sndBuf) {
-  playBuf(chirpy);
+  // playBuf(chirpy);
   playBuf(sndBuf);
 }
 
@@ -83,7 +83,7 @@ mydur => granularLoop.duration;
 
 function void recording(LiSa loop, dur mydur) {
   <<< "listening" >>>;
-  playBuf(chirpy);
+  //playBuf(chirpy);
   playBufPrefix(chirpy,listening);
   recordingVolume => g2.gain;
   100::ms => now;
@@ -104,8 +104,8 @@ function void testPlay() {
 
 function void counter() {
   <<< "Countering" >>>;
-  playBuf(chirpy);
-  playBuf(chirpy);
+  // playBuf(chirpy);
+  // playBuf(chirpy);
   playBufPrefix(chirpy,countering);
 }
 
@@ -419,9 +419,9 @@ class MidiVocoder extends AbsVocoder {
 
 
 
-playBuf(chirpy);
-playBuf(chirpy);
-playBuf(chirpy);
+//playBuf(chirpy);
+//playBuf(chirpy);
+//playBuf(chirpy);
 
 recording(chorusLoop,mydur);
 counter();

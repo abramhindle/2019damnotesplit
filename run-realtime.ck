@@ -64,7 +64,7 @@ adc => Gain g2 => dac;
 
 20.0 => hp.freq;
 1.0 => hp.Q;
-30::second => dur mydur;
+120::second => dur mydur;
 0.95 => float recordingVolume;
 1.0 => g.gain;
 0.0 => g2.gain;
@@ -477,8 +477,28 @@ function void main() {
 //adsrSqrVocoder.vocoder(adc,mydur);
 
 MidiVocoder midiVocoder3;
-2.0 => midiVocoder3._threshold;
+Std.rand2f(1.0,3.0) => midiVocoder3._threshold;
+[33, 35, 37, 39, 41, 43, 45, 47, 49] @=> midiVocoder3.midis;
+20 => int mlow;
+40 => int mhigh;
+[Std.rand2(mlow,mhigh),Std.rand2(mlow,mhigh),Std.rand2(mlow,mhigh),Std.rand2(mlow,mhigh),Std.rand2(mlow,mhigh),
+ Std.rand2(mlow,mhigh),Std.rand2(mlow,mhigh),Std.rand2(mlow,mhigh),Std.rand2(mlow,mhigh),Std.rand2(mlow,mhigh)] @=> midiVocoder3.midis;
+
 [15,15,8,8,8,5,6,7,9,9] @=> midiVocoder3.channels;
-[1::second,0.5::second,0.25::second,100::ms,100::ms,100::ms,50::ms,50::ms,50::ms,50::ms] @=> midiVocoder3.durs;
-[127,127,90,90,80,80,64,64,64,64,64,64] @=> midiVocoder3.velocities;
+[1,2,3,4,5,6,7,8,9,10] @=> midiVocoder3.channels;
+[Std.rand2(1,16),Std.rand2(1,16),Std.rand2(1,16),Std.rand2(1,16),Std.rand2(1,16),
+Std.rand2(1,16),Std.rand2(1,16),Std.rand2(1,16),Std.rand2(1,16),Std.rand2(1,16)] @=> midiVocoder3.channels;
+500 => int low;
+2000 => int high;
+[Std.rand2(low,high)::ms,Std.rand2(low,high)::ms,Std.rand2(low,high)::ms,Std.rand2(low,high)::ms,Std.rand2(low,high)::ms,
+ Std.rand2(low,high)::ms,Std.rand2(low,high)::ms,Std.rand2(low,high)::ms,Std.rand2(low,high)::ms,Std.rand2(low,high)::ms] @=> midiVocoder3.durs;
+//favMidis @=> midiVocoder3.channels;
+//[1::second,0.5::second,0.25::second,100::ms,100::ms,100::ms,50::ms,50::ms,50::ms,50::ms] @=> midiVocoder3.durs;
+//[1::second,1::second,1::second,1::second,1::second,
+// 1::second,1::second,1::second,1::second,1::second] @=> midiVocoder3.durs;
+// .5::second,0.25::second,100::ms,100::ms,100::ms,50::ms,50::ms,50::ms,50::ms] @=> midiVocoder3.durs;
+
+[Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),
+ Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120)] @=> midiVocoder3.velocities;
+//[127,127,90,90,80,80,64,64,64,64,64,64] @=> midiVocoder3.velocities;
 midiVocoder3.vocoder(adc,mydur);

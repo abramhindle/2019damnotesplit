@@ -1,0 +1,4 @@
+* The TODOS [/]
+  - [ ] Find external sound card
+  - [ ] Test on external sound card
+  - [ ] Test w/ external input
