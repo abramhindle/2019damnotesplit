@@ -6,7 +6,7 @@ for file in $FILES
 do
 	echo $file
 	mplayer -ao jack:port=inport -endpos 30 $file
-	echo sleep 30
-	sleep 30
+	echo sleep 31
+	sleep 31
 done
 
