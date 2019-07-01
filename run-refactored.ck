@@ -64,7 +64,8 @@ adc => Gain g2 => dac;
 
 20.0 => hp.freq;
 1.0 => hp.Q;
-30::second => dur mydur;
+// 30::second => dur mydur;
+45::second => dur mydur;
 0.95 => float recordingVolume;
 1.0 => g.gain;
 0.0 => g2.gain;

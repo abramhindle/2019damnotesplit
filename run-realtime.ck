@@ -416,6 +416,64 @@ class MidiVocoder extends AbsVocoder {
     }
 }
 
+//[5, 19, 33, 46, 60, 74, 87, 101, 115] @=> int favMidis[];
+
+class PinkVocoder extends AbsVocoder {
+    fun string name() {
+        return "Pink Vocoder";
+    }
+    fun int getN() {
+        return 8;
+    }
+    float sgains[];
+    Gain ngains[];
+    Noise noise;
+
+    fun void setupVocoder() {
+        //noise.mode("pink");
+        getN() => int n;
+        float _sgains[n];
+        Gain _ngains[n];
+        Noise _noise => 
+        _ngains @=> ngains;
+        _sgains @=> sgains;
+        BPF bpfs2[n];
+        for( 0 => int i; i < n ; i++ ) {
+            4.00 => bpfs2[i].Q;
+            freq(i) => bpfs2[i].freq;        
+            0.01 => ngains[i].gain;
+            noise => ngains[i] => bpfs2[i] => dac;
+        }
+    }
+    fun int midi(int i) {
+        return 12 * (i + 1);
+    }
+    fun void playANote(int i, float rms, float gain) {
+        // play a note
+        mix() => float mix;
+        (1.0-mix)*(16.0/i)*10*rms + mix*sgains[i] => sgains[i];
+        sgains[i] => ngains[i].gain;       
+    }
+    fun void stopANote(int i, float rms, float gain) {
+        mix()*sgains[i] => sgains[i];
+        sgains[i] => ngains[i].gain;
+    }
+    fun float mix() { return 0.1; }
+    fun void turnOff() {
+        getN() => int n;
+        for( 1 => int i; i < 100 ; i++ ) {
+            for( 0 => int j; j < n ; j++ ) {
+                sgains[j] / (i*i) => ngains[j].gain;
+            }
+            20::ms => now;
+        }
+        for( 0 => int j; j < n ; j++ ) {
+            0 => ngains[j].gain;
+        }
+    }
+}
+
+
 
 function void main() {
 
@@ -501,4 +559,7 @@ Std.rand2(1,16),Std.rand2(1,16),Std.rand2(1,16),Std.rand2(1,16),Std.rand2(1,16)]
 [Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),
  Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120),Std.rand2(20,120)] @=> midiVocoder3.velocities;
 //[127,127,90,90,80,80,64,64,64,64,64,64] @=> midiVocoder3.velocities;
-midiVocoder3.vocoder(adc,mydur);
+//midiVocoder3.vocoder(adc,mydur);
+
+PinkVocoder pink;
+pink.vocoder(adc, mydur);
