@@ -35,5 +35,6 @@ aconnect 14:0 132:0
 aconnect 14:0 133:0
 jack_connect  "qsynth:left"  system:playback_1
 jack_connect  "qsynth:right" system:playback_2
-gnome-terminal -- bash auto-demo.sh &
+# gnome-terminal -- bash auto-demo.sh $1 &
+gnome-terminal -- bash auto-demo2.sh $1 &
 chuck --srate:48000 run-refactored.ck
