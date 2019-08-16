@@ -2,6 +2,10 @@
 
 run-refactored.ck contains a program that listens and responds to music on its own.
 
+# generate album art?
+
+Try our python notebook: https://github.com/abramhindle/2019damnotesplit/blob/master/DamNoTe%20Split.ipynb
+
 # To regenerate the album try to run:
 
 Run: 
